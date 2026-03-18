@@ -74,6 +74,13 @@
             border: none !important;
         }
 
+        /* UKRYWANIE OPCJI DODAWANIA ZDJĘĆ Z GALERII */
+        #reader__dashboard_section_swaplink, 
+        #reader__filescan_input,
+        button#html5-qrcode-button-file-selection {
+            display: none !important;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -176,7 +183,7 @@
                 tbody.innerHTML = '';
                 data.sort((a,b) => b[1]-a[1]).forEach(row => {
                     const count = parseInt(row[1] || 0);
-                    const percent = total > 0 ? Math.round((count/total)*100) : 0;
+                    const percent = total > 0 ? Math.round((count/total) * 100) : 0;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>Stacja ${row[0]}</td><td>${count}</td><td>${percent}%</td>`;
                     tbody.appendChild(tr);
@@ -207,7 +214,13 @@
             }
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        // WYMUSZENIE TYLKO KAMERY W KONFIGURACJI
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 10, 
+            qrbox: 250,
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] 
+        });
+
         if(!localStorage.getItem('voted')) {
             html5QrcodeScanner.render(onScanSuccess);
         } else {
