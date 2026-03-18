@@ -28,6 +28,7 @@
             min-height: 100vh;
         }
 
+        /* --- TWOJA ORYGINALNA STYLIZACJA TŁA --- */
         .pi-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -49,14 +50,6 @@
             margin: 0;
             font-size: 1.8rem;
             text-shadow: 0 0 10px var(--neon-blue);
-        }
-
-        .school-tag {
-            color: var(--neon-blue);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            font-size: 0.8rem;
-            margin-bottom: 5px;
         }
 
         .container {
@@ -82,6 +75,13 @@
             border: none !important;
         }
 
+        /* DODANE: UKRYWANIE OPCJI ZDJĘĆ ZE STAREGO KODU */
+        #reader__dashboard_section_swaplink, 
+        #reader__filescan_input,
+        button#html5-qrcode-button-file-selection {
+            display: none !important;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -104,12 +104,6 @@
             font-size: 0.8rem;
         }
 
-        tr.winner {
-            background: rgba(0, 210, 255, 0.2);
-            font-weight: bold;
-            box-shadow: inset 4px 0 0 var(--neon-blue);
-        }
-
         .alert {
             padding: 15px;
             border-radius: 10px;
@@ -118,17 +112,8 @@
             animation: fadeIn 0.5s;
         }
         .alert-success { background: rgba(46, 204, 113, 0.3); border: 1px solid #2ecc71; color: #2ecc71; }
-        .alert-error { background: rgba(231, 76, 60, 0.3); border: 1px solid #e74c3c; color: #e74c3c; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .stats-summary {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: var(--neon-blue);
-        }
     </style>
 </head>
 <body>
@@ -136,24 +121,24 @@
     <div class="pi-bg" id="pi-bg"></div>
 
     <header>
-        <div class="school-tag">XX Liceum Ogólnokształcące</div>
+        <div style="color: var(--neon-blue); font-size: 0.8rem; letter-spacing: 3px; margin-bottom: 5px;">XX LO</div>
         <h1>𝜋 DZIEŃ LICZBY PI 2026 𝜋</h1>
     </header>
 
     <div class="container">
         <div id="status-msg" class="alert"></div>
 
-        <div class="card" id="scanner-card">
-            <h3 style="margin-top:0"><span id="user-status">📷 Zeskanuj kod stacji</span></h3>
+        <div class="card">
+            <h3 style="margin-top:0; text-align: center;">📷 Zeskanuj kod stacji</h3>
             <div id="reader"></div>
         </div>
 
         <div class="card">
-            <div class="stats-summary">
-                <span>RANKING STACJI (NA ŻYWO)</span>
+            <div style="display:flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; color: var(--neon-blue);">
+                <span>RANKING NA ŻYWO</span>
                 <span id="total-votes-display">Suma głosów: ...</span>
             </div>
-            <table id="results-table">
+            <table>
                 <thead>
                     <tr>
                         <th>STACJA</th>
@@ -169,10 +154,10 @@
     </div>
 
     <script>
-        // --- KONFIGURACJA ---
+        // TWÓJ LINK GOOGLE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEwD-ytntDUxYo0WlvJYl3Ld6p1_6A-3juWwe1q4vKhnvtZq_RzaiqUKUqKVYMMb8/exec";
         
-        // --- INICJALIZACJA TŁA ---
+        // TWOJE LATAJĄCE PI
         const bg = document.getElementById('pi-bg');
         for(let i=0; i<30; i++) {
             const pi = document.createElement('div');
@@ -180,92 +165,71 @@
             pi.style.position = 'absolute';
             pi.style.left = Math.random() * 100 + 'vw';
             pi.style.top = Math.random() * 100 + 'vh';
-            pi.style.opacity = Math.random() * 0.1;
+            pi.style.opacity = Math.random() * 0.15;
             bg.appendChild(pi);
-        }
-
-        // --- LOGIKA GŁOSOWANIA ---
-        
-        checkExistingVote();
-        fetchResults();
-        setInterval(fetchResults, 5000); // Odświeżaj co 5 sekund
-
-        function checkExistingVote() {
-            if (localStorage.getItem('user_has_voted')) {
-                document.getElementById('user-status').innerHTML = "🔒 Głos oddany";
-                document.getElementById('reader').innerHTML = "<div style='text-align:center; padding:20px;'>Dziękujemy! Twoje punkty zostały doliczone.</div>";
-                return true;
-            }
-            return false;
-        }
-
-        async function registerVote(stationId) {
-            if (checkExistingVote()) return;
-
-            showStatus("⏳ Zapisywanie głosu...", "success");
-
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=vote&id=${stationId}`);
-                if (response.ok) {
-                    localStorage.setItem('user_has_voted', 'true');
-                    showStatus(`✅ Oddano głos na stację ${stationId}!`, "success");
-                    checkExistingVote();
-                    fetchResults();
-                }
-            } catch (error) {
-                showStatus("⚠️ Błąd połączenia. Spróbuj jeszcze raz.", "error");
-            }
         }
 
         async function fetchResults() {
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getResults`);
                 const data = await response.json();
-                updateUI(data);
-            } catch (error) {
-                console.error("Błąd pobierania danych");
-            }
-        }
-
-        function updateUI(data) {
-            const tbody = document.getElementById('results-body');
-            const totalDisplay = document.getElementById('total-votes-display');
-            
-            let totalVotes = data.reduce((sum, row) => sum + parseInt(row[1] || 0), 0);
-            totalDisplay.innerText = `Suma głosów: ${totalVotes}`;
-
-            let sortedData = [...data].sort((a, b) => b[1] - a[1]);
-            tbody.innerHTML = '';
-
-            sortedData.forEach(row => {
-                const tr = document.createElement('tr');
-                const count = parseInt(row[1] || 0);
-                const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                const tbody = document.getElementById('results-body');
+                const totalDisplay = document.getElementById('total-votes-display');
                 
-                tr.innerHTML = `<td>Stacja ${row[0]}</td><td>${count}</td><td>${percent}%</td>`;
-                tbody.appendChild(tr);
-            });
+                let total = data.reduce((sum, row) => sum + parseInt(row[1] || 0), 0);
+                totalDisplay.innerText = `Suma głosów: ${total}`;
+
+                tbody.innerHTML = '';
+                data.sort((a,b) => b[1]-a[1]).forEach(row => {
+                    const count = parseInt(row[1] || 0);
+                    const percent = total > 0 ? Math.round((count/total)*100) : 0;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>Stacja ${row[0]}</td><td>${count}</td><td>${percent}%</td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) { console.log("Błąd danych"); }
         }
 
-        function showStatus(msg, type) {
-            const statusDiv = document.getElementById('status-msg');
-            statusDiv.innerText = msg;
-            statusDiv.className = `alert alert-${type}`;
-            statusDiv.style.display = "block";
+        async function registerVote(id) {
+            if(localStorage.getItem('voted')) return;
+            document.getElementById('status-msg').style.display = 'block';
+            document.getElementById('status-msg').innerText = "⏳ Zapisywanie...";
+            document.getElementById('status-msg').className = "alert alert-success";
+
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=vote&id=${id}`);
+                if(res.ok) {
+                    localStorage.setItem('voted', 'true');
+                    document.getElementById('status-msg').innerText = `✅ Głos na stację ${id} oddany!`;
+                    fetchResults();
+                }
+            } catch(e) { alert("Błąd!"); }
         }
 
-        // --- SKANER QR ---
-        function onScanSuccess(decodedText) {
-            if (decodedText.startsWith('station-')) {
-                const id = parseInt(decodedText.split('-')[1]);
-                if(id >= 1 && id <= 22) registerVote(id);
+        function onScanSuccess(text) {
+            if(text.startsWith('station-')) {
+                const id = text.split('-')[1];
+                html5QrcodeScanner.clear().then(() => registerVote(id));
             }
         }
 
-        if (!localStorage.getItem('user_has_voted')) {
-            let scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            scanner.render(onScanSuccess);
+        // --- ZMIANA: TYLKO KAMERA I BRAK OPCJI ZDJĘĆ ---
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 10, 
+            qrbox: 250,
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] 
+        });
+
+        if(!localStorage.getItem('voted')) {
+            html5QrcodeScanner.render(onScanSuccess);
+        } else {
+            document.getElementById('status-msg').style.display = 'block';
+            document.getElementById('status-msg').innerText = "✅ Już zagłosowałeś!";
+            document.getElementById('status-msg').className = "alert alert-success";
         }
+
+        setInterval(fetchResults, 5000);
+        fetchResults();
     </script>
 </body>
 </html>
