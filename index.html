@@ -28,7 +28,6 @@
             min-height: 100vh;
         }
 
-        /* --- TWOJA ORYGINALNA STYLIZACJA TŁA --- */
         .pi-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -75,7 +74,7 @@
             border: none !important;
         }
 
-        /* DODANE: UKRYWANIE OPCJI ZDJĘĆ ZE STAREGO KODU */
+        /* BLOKADA OPCJI ZDJĘĆ */
         #reader__dashboard_section_swaplink, 
         #reader__filescan_input,
         button#html5-qrcode-button-file-selection {
@@ -129,7 +128,7 @@
         <div id="status-msg" class="alert"></div>
 
         <div class="card">
-            <h3 style="margin-top:0; text-align: center;">📷 Zeskanuj kod stacji</h3>
+            <h3 style="margin-top:0; text-align: center;">📷 Zeskanuj kod stacji (1-21)</h3>
             <div id="reader"></div>
         </div>
 
@@ -154,7 +153,6 @@
     </div>
 
     <script>
-        // TWÓJ LINK GOOGLE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEwD-ytntDUxYo0WlvJYl3Ld6p1_6A-3juWwe1q4vKhnvtZq_RzaiqUKUqKVYMMb8/exec";
         
         // TWOJE LATAJĄCE PI
@@ -176,11 +174,14 @@
                 const tbody = document.getElementById('results-body');
                 const totalDisplay = document.getElementById('total-votes-display');
                 
-                let total = data.reduce((sum, row) => sum + parseInt(row[1] || 0), 0);
+                // Filtrujemy dane do 21 wierszy na wszelki wypadek
+                const validData = data.slice(0, 21);
+                
+                let total = validData.reduce((sum, row) => sum + parseInt(row[1] || 0), 0);
                 totalDisplay.innerText = `Suma głosów: ${total}`;
 
                 tbody.innerHTML = '';
-                data.sort((a,b) => b[1]-a[1]).forEach(row => {
+                validData.sort((a,b) => b[1]-a[1]).forEach(row => {
                     const count = parseInt(row[1] || 0);
                     const percent = total > 0 ? Math.round((count/total)*100) : 0;
                     const tr = document.createElement('tr');
@@ -193,27 +194,29 @@
         async function registerVote(id) {
             if(localStorage.getItem('voted')) return;
             document.getElementById('status-msg').style.display = 'block';
-            document.getElementById('status-msg').innerText = "⏳ Zapisywanie...";
+            document.getElementById('status-msg').innerText = "⏳ Zapisywanie głosu...";
             document.getElementById('status-msg').className = "alert alert-success";
 
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=vote&id=${id}`);
                 if(res.ok) {
                     localStorage.setItem('voted', 'true');
-                    document.getElementById('status-msg').innerText = `✅ Głos na stację ${id} oddany!`;
+                    document.getElementById('status-msg').innerText = `✅ Punkt dla stacji ${id} oddany!`;
                     fetchResults();
                 }
-            } catch(e) { alert("Błąd!"); }
+            } catch(e) { alert("Błąd połączenia z bazą!"); }
         }
 
         function onScanSuccess(text) {
             if(text.startsWith('station-')) {
-                const id = text.split('-')[1];
-                html5QrcodeScanner.clear().then(() => registerVote(id));
+                const id = parseInt(text.split('-')[1]);
+                // Akceptujemy tylko ID od 1 do 21
+                if(id >= 1 && id <= 21) {
+                    html5QrcodeScanner.clear().then(() => registerVote(id));
+                }
             }
         }
 
-        // --- ZMIANA: TYLKO KAMERA I BRAK OPCJI ZDJĘĆ ---
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
             fps: 10, 
             qrbox: 250,
@@ -224,7 +227,7 @@
             html5QrcodeScanner.render(onScanSuccess);
         } else {
             document.getElementById('status-msg').style.display = 'block';
-            document.getElementById('status-msg').innerText = "✅ Już zagłosowałeś!";
+            document.getElementById('status-msg').innerText = "✅ Twój głos został już wcześniej oddany!";
             document.getElementById('status-msg').className = "alert alert-success";
         }
 
