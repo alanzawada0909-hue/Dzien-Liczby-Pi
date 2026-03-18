@@ -140,7 +140,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>NR</th>
+                        <th>STACJA</th>
                         <th>GŁOSY</th>
                         <th>%</th>
                     </tr>
@@ -177,9 +177,7 @@
                 const tbody = document.getElementById('results-body');
                 const totalDisplay = document.getElementById('total-votes-display');
                 
-                // Bierzemy tylko 21 rekordów
                 const validData = data.slice(0, 21);
-                
                 let total = validData.reduce((sum, row) => sum + parseInt(row[1] || 0), 0);
                 totalDisplay.innerText = `Suma głosów: ${total}`;
 
@@ -188,8 +186,8 @@
                     const count = parseInt(row[1] || 0);
                     const percent = total > 0 ? Math.round((count/total)*100) : 0;
                     const tr = document.createElement('tr');
-                    // Usunięte "Stacja", zostawiony sam numer row[0]
-                    tr.innerHTML = `<td>${row[0]}</td><td>${count}</td><td>${percent}%</td>`;
+                    // Przywrócony napis "Stacja" przed numerem
+                    tr.innerHTML = `<td>Stacja ${row[0]}</td><td>${count}</td><td>${percent}%</td>`;
                     tbody.appendChild(tr);
                 });
             } catch(e) { console.log("Błąd"); }
@@ -218,7 +216,6 @@
             }
         }
 
-        // TYLKO KAMERA
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
             fps: 10, 
             qrbox: 250,
